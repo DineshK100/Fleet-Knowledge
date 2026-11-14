@@ -1,0 +1,10 @@
+float64 x
+float64 y
+float64 radius                 # <= 0 returns every record
+string query_text              # optional context text for semantic similarity
+uint32 max_results             # 0 = unlimited
+float32 min_confidence
+---
+fleet_msgs/HazardMemory[] records
+float32[] similarities         # cosine similarity between query_text and each description
+float32[] distances            # euclidean distance from (x, y), m

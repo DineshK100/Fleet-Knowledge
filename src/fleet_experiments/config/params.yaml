@@ -1,0 +1,110 @@
+# Default parameters for every Fleet Memory node.
+# NOTE: keep a decimal point on float parameters (rclpy is strict about types).
+
+fleet_memory:
+  ros__parameters:
+    merge_radius_m: 20.0
+    merge_text_similarity: 0.3
+    merge_heading_cos: 0.0
+    initial_confidence: 0.6
+    confirm_gain: 0.5
+    refute_factor: 0.5
+    decay_lambda: 0.0002          # 1/s of simulated time (half-life ~ 58 min)
+    prune_threshold: 0.1
+    prune_period_s: 5.0
+    embedding_backend: auto       # auto | sentence_transformers | hashing
+    embedding_model: sentence-transformers/all-MiniLM-L6-v2
+    persist_path: ''
+    load_on_start: false
+    save_on_exit: false
+    frame_id: map
+    marker_period_s: 1.0
+
+/**/hazard_writer:
+  ros__parameters:
+    writer_mode: vlm              # vlm | template | off
+    vlm_base_url: http://localhost:11434/v1     # Ollama; vLLM default is http://localhost:8000/v1
+    vlm_model: qwen2.5vl:7b
+    vlm_api_key_env: OPENAI_API_KEY
+    vlm_timeout_s: 90.0
+    vlm_max_tokens: 300
+    max_image_width: 640
+    buffer_s: 3.0
+    post_trigger_s: 1.0
+    num_keyframes: 4
+    keyframe_before_s: 2.0
+    keyframe_after_s: 0.5
+    cooldown_s: 5.0
+    hard_brake_g: 0.4
+    ttc_threshold_s: 1.5
+    jerk_threshold: 25.0
+    bump_jerk_threshold: 8.0
+    obstacle_evidence_range_m: 25.0
+    memory_service: /fleet_memory/write
+    dataset_dir: ''
+
+/**/memory_reader:
+  ros__parameters:
+    adapter: rules                # rules | llm | none
+    query_rate_hz: 2.0
+    min_confidence: 0.25
+    lookahead_m: 150.0
+    corridor_m: 6.0
+    behind_margin_m: 15.0
+    w_distance: 0.2
+    w_heading: 0.2
+    w_confidence: 0.2
+    w_recency: 0.2
+    w_similarity: 0.2
+    use_heading: true
+    tau_s: 1800.0
+    s_min: 0.45
+    top_k: 3
+    a_comfort: 2.0
+    brake_buffer_m: 8.0
+    enable_lane_change: true
+    enable_reroute: true
+    reroute_min_severity: 5
+    reroute_min_confidence: 0.8
+    cruise_speed_kmh: 45.0
+    llm_base_url: http://localhost:11434/v1
+    llm_model: qwen2.5:7b
+    llm_api_key_env: OPENAI_API_KEY
+    llm_timeout_s: 30.0
+    feedback_enabled: true
+    pass_radius_m: 15.0
+    evidence_radius_m: 25.0
+
+scenario_runner:
+  ros__parameters:
+    carla_host: localhost
+    carla_port: 2000
+    carla_timeout_s: 30.0
+    tm_port: 8000
+    town: ''                      # overrides the scenario's town if set
+    fixed_delta_s: 0.05
+    no_rendering: false
+    realtime_factor: 1.0          # <= 0: run as fast as CARLA allows
+    weather: auto
+    traffic_lights: green         # normal | green | ignore
+    num_background_vehicles: 0
+    follow_spectator: true
+    reset_memory_on_start: true
+    max_car_time_s: 240.0
+    stuck_timeout_s: 60.0
+    inter_car_gap_s: 30.0
+    writer_flush_timeout_s: 120.0
+    ego_blueprint: vehicle.lincoln.mkz_2020
+    camera_width: 800
+    camera_height: 450
+    camera_fov: 90.0
+    camera_rate_hz: 10.0
+    video_width: 1280
+    video_height: 720
+    behavior: normal
+    cruise_speed_kmh: 45.0
+    a_comfort: 2.0
+    bypass_trigger_m: 90.0
+    bypass_past_m: 50.0
+    perception_range_m: 45.0
+    corridor_half_width_m: 1.4

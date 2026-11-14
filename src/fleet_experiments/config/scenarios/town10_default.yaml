@@ -1,0 +1,57 @@
+# Same hazards on Town10HD.
+#
+# Hazards are placed automatically at the first suitable spot after `after_m`
+# metres along the route (see fleet_experiments/hazards.py). With
+# route.mode: auto the runner searches (deterministically, `route_seed`) for a
+# route that fits every enabled hazard and logs the spawn-point pair it used.
+# Pin it afterwards with mode: spawn_points so every experiment uses the same route.
+
+town: Town10HD
+
+route:
+  mode: auto                 # auto | spawn_points | coordinates
+  route_seed: 7
+  attempts: 400
+  min_length_m: 500.0
+  max_length_m: 1400.0
+  # mode: spawn_points
+  # start_spawn: 0
+  # end_spawn: 1
+  # mode: coordinates        # CARLA coordinates
+  # start: [x, y]
+  # end: [x, y]
+
+min_hazard_gap_m: 70.0
+
+hazards:
+  - name: blind_intersection
+    type: pedestrian_crossing
+    after_m: 60.0
+    visibility_m: 40.0          # pedestrian is visible once in the path
+    trigger_distance_m: 18.0    # walker steps out when the ego is this close
+    trigger_jitter_m: 2.0
+    walker_speed_mps: 2.2
+    van_before_m: 7.0
+    walker_before_m: 3.0
+
+  - name: road_works
+    type: lane_closure
+    after_m: 150.0
+    visibility_m: 18.0          # cones are seen late
+    taper_m: 12.0
+    length_m: 18.0
+    # active_until_car: 5       # E3: the lane re-opens after car 5 (stale memory)
+
+  - name: pothole
+    type: road_damage
+    after_m: 250.0
+    safe_speed_kmh: 20.0
+    jolt_gain: 0.35
+    bump_min_mps: 0.3
+
+  - name: stalled_car           # stretch scenario
+    type: stalled_vehicle
+    enabled: false
+    after_m: 350.0
+    visibility_m: 22.0
+    min_curve_deg: 30.0

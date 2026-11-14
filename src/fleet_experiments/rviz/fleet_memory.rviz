@@ -1,0 +1,71 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 10
+      Plane Cell Count: 40
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Road network
+      Enabled: true
+      Value: true
+      Topic:
+        Value: /fleet_experiments/road_network
+        Durability Policy: Transient Local
+        Reliability Policy: Reliable
+        Depth: 1
+    - Class: rviz_default_plugins/Marker
+      Name: Route
+      Enabled: true
+      Value: true
+      Topic:
+        Value: /fleet_experiments/route
+        Durability Policy: Transient Local
+        Reliability Policy: Reliable
+        Depth: 1
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Ground-truth hazards
+      Enabled: true
+      Value: true
+      Topic:
+        Value: /fleet_experiments/gt_hazards
+        Durability Policy: Transient Local
+        Reliability Policy: Reliable
+        Depth: 1
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Fleet memory
+      Enabled: true
+      Value: true
+      Topic:
+        Value: /fleet_memory/markers
+        Durability Policy: Transient Local
+        Reliability Policy: Reliable
+        Depth: 1
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: true
+      Value: true
+      Show Names: true
+      Marker Scale: 8
+  Global Options:
+    Fixed Frame: map
+    Background Color: 30; 30; 35
+    Frame Rate: 30
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Name: Current View
+      Scale: 2.5
+      X: 0
+      Y: 0
+    Saved: ~
+Window Geometry:
+  Width: 1400
+  Height: 900

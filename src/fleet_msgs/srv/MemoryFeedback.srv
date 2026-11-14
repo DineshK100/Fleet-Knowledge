@@ -1,0 +1,7 @@
+string id
+bool confirm                   # true: hazard confirmed, false: refuted (clean pass)
+string reporter_id
+---
+bool success
+float32 confidence
+bool pruned

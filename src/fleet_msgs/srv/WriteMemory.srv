@@ -1,0 +1,8 @@
+fleet_msgs/HazardMemory record
+bool allow_merge               # merge into a nearby similar record instead of inserting
+---
+bool success
+bool merged
+string id
+float32 confidence
+string message

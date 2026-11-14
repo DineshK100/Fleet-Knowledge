@@ -1,0 +1,11 @@
+# Python dependencies (in addition to ROS 2 Humble and its python3-* packages)
+carla==0.9.15          # must match the CARLA server version (0.9.16 also works)
+networkx               # CARLA agents (GlobalRoutePlanner)
+shapely                # CARLA agents
+numpy
+pyyaml
+matplotlib
+opencv-python-headless # JPEG encoding / video overlay (or apt python3-opencv)
+# optional
+sentence-transformers  # better text embeddings for the memory (falls back to hashing)
+# faiss-cpu            # optional vector index for global semantic search
