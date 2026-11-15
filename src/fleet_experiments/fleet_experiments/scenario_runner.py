@@ -175,7 +175,9 @@ class ScenarioRunner(Node):
         p('run_name', '')
         p('config_name', '')                     # label used by plot_results to group runs
         # ego
-        p('ego_blueprint', 'vehicle.lincoln.mkz_2020')
+        p('ego_blueprint', 'vehicle.tesla.model3')   # single gear: no shift jolts
+        p('ego_low_coast_drag', True)              # no ~0.45 g engine drag at zero throttle
+        p('speed_pid_max_brake', 0.15)             # agent speed PID brake limit (CARLA: 0.3)
         p('camera_width', 800)
         p('camera_height', 450)
         p('camera_fov', 90.0)
@@ -564,6 +566,19 @@ class ScenarioRunner(Node):
         for _ in range(100):
             ego = self.world.try_spawn_actor(bp, tf)
             if ego is not None:
+                # With zero throttle CARLA applies a strong engine drag
+                # (damping_rate_zero_throttle_*), so every throttle-off tick of the agent's
+                # PID decelerated the car at ~0.45 g, which the trigger counted as hard brakes.
+                # Coast with the full-throttle damping instead. (Gearboxed cars such as the MKZ
+                # also jolt at every downshift, hence the single-gear Tesla as default ego.)
+                if self.g('ego_low_coast_drag'):
+                    try:
+                        pc = ego.get_physics_control()
+                        pc.damping_rate_zero_throttle_clutch_engaged = pc.damping_rate_full_throttle
+                        pc.damping_rate_zero_throttle_clutch_disengaged = pc.damping_rate_full_throttle
+                        ego.apply_physics_control(pc)
+                    except RuntimeError as exc:
+                        self.log(f'could not change ego physics: {exc}')
                 return ego
             self.tick(10)                              # start blocked by traffic: wait
         raise RuntimeError('could not spawn ego vehicle at the route start')
@@ -662,7 +677,8 @@ class ScenarioRunner(Node):
         drv_cfg = DriverConfig(behavior=self.g('behavior'), cruise_speed_kmh=self.g('cruise_speed_kmh'),
                                a_comfort=self.g('a_comfort'), bypass_trigger_m=self.g('bypass_trigger_m'),
                                bypass_past_m=self.g('bypass_past_m'),
-                               ignore_traffic_lights=self.g('traffic_lights') == 'ignore')
+                               ignore_traffic_lights=self.g('traffic_lights') == 'ignore',
+                               speed_pid_max_brake=self.g('speed_pid_max_brake'))
         driver = EgoDriver(carla, self.world, self.cmap, self.grp, ego, list(self.route), self.dest,
                            drv_cfg, self.get_logger())
         perception = GroundTruthPerception(self.world, ego, PerceptionConfig(

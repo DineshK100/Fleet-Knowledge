@@ -28,8 +28,9 @@ hazards:
     type: pedestrian_crossing
     after_m: 60.0
     visibility_m: 40.0          # pedestrian is visible once in the path
-    trigger_distance_m: 18.0    # walker steps out when the ego is this close
-    trigger_jitter_m: 2.0
+    appear_distance_m: 12.0     # walker enters the ego path when the ego is this far away
+    appear_jitter_m: 2.0
+    appear_ttc_s: 1.4           # ...or this time-to-collision away, whichever is further
     walker_speed_mps: 2.2
     van_before_m: 7.0
     walker_before_m: 3.0

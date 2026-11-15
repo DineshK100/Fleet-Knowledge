@@ -373,12 +373,18 @@ class PedestrianCrossing(Hazard):
                                   visible_m=self.spec.visibility_m)
         if self.walker is None:
             raise RuntimeError(f'could not spawn pedestrian for hazard {self.name}')
+        # Where the walker crosses the ego's lane (the route lane, which may be one or more
+        # lanes left of the kerb) and how far it has to walk to get there.
+        cross_wp = _along(self.wp, -p.get('walker_before_m', 3.0))
+        self.cross_loc = cross_wp.transform.location
+        self.lateral_m = math.hypot(self.walker_start.x - self.cross_loc.x,
+                                    self.walker_start.y - self.cross_loc.y)
         self.state = 'waiting'
 
     def reset_for_car(self, car):
         p = self.spec.params
-        self.trigger_distance = p.get('trigger_distance_m', 18.0) + \
-            self.rng.uniform(-1.0, 1.0) * p.get('trigger_jitter_m', 2.0)
+        self.appear_distance = p.get('appear_distance_m', 12.0) + \
+            self.rng.uniform(-1.0, 1.0) * p.get('appear_jitter_m', 2.0)
         self.walker.apply_control(self.carla.WalkerControl(self.walk_dir, 0.0))
         self.walker.set_transform(self.carla.Transform(self.walker_start,
                                                        self.carla.Rotation(yaw=self.walker_yaw)))
@@ -388,17 +394,32 @@ class PedestrianCrossing(Hazard):
     def tick(self, ego, dt):
         p = self.spec.params
         if self.state == 'waiting':
+            # Step out so that the walker enters the ego's path when the ego is
+            # ``appear_distance_m`` from the crossing point: start earlier by the ego's travel
+            # during the walk to the lane. A fixed trigger distance let a car in an inner lane
+            # pass before the walker arrived; a slower (memory-capped) car now meets the walker
+            # at the same distance but with a larger TTC, which is the effect we measure.
             el = ego.get_location()
-            d = el.distance(self.walker_start)
+            cp = self.cross_loc
             f = ego.get_transform().get_forward_vector()
-            ahead = (self.walker_start.x - el.x) * f.x + (self.walker_start.y - el.y) * f.y > 0
-            if ahead and d <= self.trigger_distance:
+            ahead = (cp.x - el.x) * f.x + (cp.y - el.y) * f.y > 0
+            v = ego.get_velocity()
+            v_ego = math.sqrt(v.x ** 2 + v.y ** 2)
+            v_walk = p.get('walker_speed_mps', 2.2)
+            t_walk = max(0.0, self.lateral_m - p.get('path_half_width_m', 1.6)) / v_walk
+            d = math.hypot(cp.x - el.x, cp.y - el.y)
+            # appear at a fixed time-to-collision (but at least appear_distance_m), so a fast
+            # car still has room to stop: a surprise, not an unavoidable crash
+            appear = max(self.appear_distance, v_ego * p.get('appear_ttc_s', 1.4))
+            if ahead and d <= appear + v_ego * t_walk:
                 self.state = 'crossing'
-                self.speed = p.get('walker_speed_mps', 2.2)
+                self.speed = v_walk
                 self.walker.apply_control(self.carla.WalkerControl(self.walk_dir, self.speed))
         elif self.state == 'crossing':
             self.walked += self.speed * dt
-            if self.walked >= p.get('walk_distance_m', 2 * self.kerb_wp.lane_width + 3.0):
+            walk_m = p.get('walk_distance_m', max(2 * self.kerb_wp.lane_width + 3.0,
+                                                  self.lateral_m + 4.0))
+            if self.walked >= walk_m:
                 self.walker.apply_control(self.carla.WalkerControl(self.walk_dir, 0.0))
                 self.state = 'done'
 
