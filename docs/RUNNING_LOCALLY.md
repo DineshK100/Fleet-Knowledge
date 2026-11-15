@@ -152,3 +152,29 @@ What **needs fixing** before experiments mean anything:
    changes lane early because of a lane-closure memory never sees the cones, counts a
    "clean pass" and refutes the memory. A pass should not refute a memory the car was
    acting on (`memory_reader/feedback.py`, `PassTracker`).
+7. **"Near-miss" with TTC 0.00 while bypassing the cones.** Both cars logged one at
+   (9.8, -138.8) while driving *around* the cones: perception reports them in the path
+   at distance 0. Not a real near-miss; ignore obstacles the car is already alongside
+   or bypassing.
+
+8. **CARLA server froze between car 2 and car 3.** ~40 s after "Car 2 done" the server
+   stopped answering (process alive, 0 % CPU, no kernel/GPU errors). The runner died with
+   an uncaught `carla::client::TimeoutException` (`terminate called`, exit -6), so
+   `cleanup()` never ran and CARLA was left in synchronous mode. Recovery:
+   `pkill -9 -f CarlaUE4-Linux-Shipping` and restart. Cars 1–2 results were saved.
+   To do: catch the timeout and exit cleanly; consider `carla_timeout_s: 60`; if it
+   repeats between cars, inspect the car hand-over (ego/sensor destroy, `inter_car_gap_s`
+   ticks); if random, try `-RenderOffScreen`.
+
+### First-run numbers (`town10_first`) — distorted by issue 1
+
+| | Car 1 | Car 2 |
+|---|---|---|
+| Arrival time | 100.4 s | 122.2 s (+22 %) |
+| Near-misses | 1/3 | 1/3 (bypass artifact, issue 7) |
+| Hard brakes | 20 | 33 |
+| Collisions | 0 | 0 |
+| Memories written | 14 | 20 |
+
+Car 2 obeyed ~7 fake `road_damage` memories (slowed to 15–20 km/h at each), so it was
+slower and braked more. The "fleet improves" result can only appear after issue 1 is fixed.
