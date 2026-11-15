@@ -4,7 +4,8 @@ Strong ("surprise") events, which make the writer create a memory:
   * hard_brake  - smoothed longitudinal deceleration above ``hard_brake_g`` * g
   * near_miss   - time-to-collision below ``ttc_threshold_s`` while closing fast
   * collision   - any collision reported by the collision sensor
-  * jerk        - jerk spike while the acceleration is also large (e.g. a pothole hit at speed)
+  * jerk        - decelerating jerk spike while the deceleration is also large
+                  (e.g. a pothole hit at speed); positive spikes (gear shifts) are ignored
 
 Weak evidence, used by the memory reader to confirm memories (never written):
   * bump          - small jerk spike (e.g. a pothole driven over slowly)
@@ -89,7 +90,9 @@ class SurpriseDetector:
         elif self._braking and a > -c.hard_brake_release_g * G:
             self._braking = False
 
-        big_jerk = abs(jerk) > c.jerk_threshold and abs(a) > c.jerk_min_accel_g * G
+        # Only a decelerating jolt (pothole, kerb strike) is a surprise. Positive spikes are
+        # the drivetrain (e.g. gear shifts while accelerating hard), not the road.
+        big_jerk = jerk < -c.jerk_threshold and a < -c.jerk_min_accel_g * G
         if big_jerk and not self._jerk_active:
             self._jerk_active = True
             out.append(Detection('jerk', t, abs(jerk), True))

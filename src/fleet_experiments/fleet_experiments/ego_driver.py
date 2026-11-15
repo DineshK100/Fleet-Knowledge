@@ -35,6 +35,8 @@ class DriverConfig:
     pass_margin_m: float = 8.0
     constraint_corridor_m: float = 8.0
     lat_accel_max: float = 3.0
+    curve_lookahead_m: float = 80.0
+    speed_pid_max_brake: float = 0.15
     emergency_max_decel: float = 8.0
     stop_gap_m: float = 3.0
     bypass_trigger_m: float = 90.0
@@ -64,6 +66,13 @@ class EgoDriver:
         if cfg.ignore_traffic_lights and hasattr(self.agent, 'ignore_traffic_lights'):
             self.agent.ignore_traffic_lights(True)
         self._set_plan(route_plan)
+        # The agent's speed PID brakes with its maximum (0.3) for any small overspeed, i.e.
+        # bang-bang throttle/brake at 20 Hz. Limit it to cruise-control braking; obstacle
+        # braking (below) and the agent's emergency stop set the brake directly.
+        lp = self.agent.get_local_planner()
+        ctl = getattr(lp, '_vehicle_controller', None)
+        if ctl is not None and hasattr(ctl, 'max_brake'):
+            lp._max_brake = ctl.max_brake = cfg.speed_pid_max_brake
         self.half_len = vehicle.bounding_box.extent.x
         self.constraints: List[Dict] = []
         self.handled = set()
@@ -139,12 +148,25 @@ class EgoDriver:
         return cap, src
 
     def _curve_limit(self, route: RoutePolyline) -> float:
+        """Speed limit for the curves ahead, approached at ``a_comfort``.
+
+        A curve at distance d with comfortable speed v_c allows sqrt(v_c^2 + 2 a d) now.
+        Without this ramp the target jumped (45 -> 21 km/h) as soon as a turn entered the
+        window and the agent's PID braked at ~1 g before every turn, which the surprise
+        trigger then reported as hard brakes."""
         if route.length < 10:
             return float('inf')
-        k = route.max_curvature(0.0, 35.0, step=5.0)
-        if k < 1e-3:
-            return float('inf')
-        return max(15.0, math.sqrt(self.cfg.lat_accel_max / k) * 3.6)
+        v_min = 15.0 / 3.6
+        best = float('inf')
+        s = 0.0
+        horizon = min(self.cfg.curve_lookahead_m, route.length - 5.0)
+        while s <= horizon:
+            k = route.max_curvature(s, s + 10.0, step=5.0)
+            if k >= 1e-3:
+                v_c = max(v_min, math.sqrt(self.cfg.lat_accel_max / k))
+                best = min(best, math.sqrt(v_c ** 2 + 2.0 * self.cfg.a_comfort * s))
+            s += 5.0
+        return best * 3.6
 
     # ------------------------------------------------------------ maneuvers
     def _route_wp_near(self, loc, max_d=10.0):

@@ -155,5 +155,5 @@ cd src && PYTHONPATH=fleet_memory:hazard_writer:memory_reader:fleet_experiments 
 
 - The pieces that touch CARLA (`scenario_runner.py`, `ego_driver.py`, `hazards.py`, `perception.py`) target the 0.9.13+ Python API and `agents` package. They could not be run while writing the code, so the first run is the integration test. Watch the log for spawn failures (props, van, walker) and adjust offsets in the scenario YAML.
 - If the auto route search fails on a map, lower `min_length_m`, change `after_m`, or disable a hazard.
-- If car 1 doesn't hard-brake or nearly miss at a hazard, tune `cruise_speed_kmh`, the hazard's `visibility_m`, the pedestrian `trigger_distance_m` or the pothole `jolt_gain`. If later cars are too cautious, tune the speed caps (`memory_reader/policy.py`) and `s_min`.
+- If car 1 doesn't hard-brake or nearly miss at a hazard, tune `cruise_speed_kmh`, the hazard's `visibility_m`, the pedestrian `appear_distance_m` or the pothole `jolt_gain`. If later cars are too cautious, tune the speed caps (`memory_reader/policy.py`) and `s_min`.
 - VLM latency doesn't slow the simulation. Writes happen in a background thread, and the runner waits for pending writes before the next car starts (`writer_flush_timeout_s`).

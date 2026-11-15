@@ -73,7 +73,10 @@ class GroundTruthPerception:
             if loc.distance(ego_loc) > horizon + 10.0:
                 continue
             s, lat, _ = route.project(loc.x, loc.y)
-            if s <= 0.5 or s > horizon:
+            # s is measured from the ego centre: anything not ahead of the front bumper is
+            # beside the car (e.g. the cone row while bypassing a lane closure). Reporting it
+            # as "0 m ahead" made the car emergency-stop next to the cones forever.
+            if s <= self.ego_half_len or s > horizon:
                 continue
             ext = actor.bounding_box.extent
             half_w = max(ext.x, ext.y) if actor_kind(actor) == 'walker' else min(ext.x, ext.y)

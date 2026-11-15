@@ -94,7 +94,9 @@ scenario_runner:
     stuck_timeout_s: 60.0
     inter_car_gap_s: 30.0
     writer_flush_timeout_s: 120.0
-    ego_blueprint: vehicle.lincoln.mkz_2020
+    ego_blueprint: vehicle.tesla.model3   # single gear: gearboxed cars jolt at every downshift
+    ego_low_coast_drag: true              # no ~0.45 g engine drag when the throttle is off
+    speed_pid_max_brake: 0.15             # cruise-control brake limit; obstacle braking is separate
     camera_width: 800
     camera_height: 450
     camera_fov: 90.0

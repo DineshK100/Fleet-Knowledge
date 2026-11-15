@@ -37,6 +37,13 @@ def test_jolt_triggers_jerk_but_slow_bump_is_weak():
     assert any(x.kind == 'bump' for x in out2)
 
 
+def test_gear_shift_kick_is_not_a_surprise():
+    # CARLA gearbox: torque gap (~0 accel) then a kick back to 9 m/s^2 while accelerating
+    d = SurpriseDetector()
+    out = feed(d, ([4.0] * 10 + [0.0] * 3 + [9.0] * 6) * 3)
+    assert not [x for x in out if x.is_surprise]
+
+
 def test_near_miss_and_obstacle_evidence():
     d = SurpriseDetector()
     out = d.update_obstacle(0.0, True, 10.0, 10.0, 1.0, 'walker', 7, (1.0, 2.0))
